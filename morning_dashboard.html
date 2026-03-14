@@ -407,37 +407,20 @@ const FIXED_LOCS={
 async function fetchWeather(lat, lon, targetEl, nameEl, compact=false){
   if(nameEl) nameEl.textContent='— 取得中…';
   if(targetEl) targetEl.innerHTML='<div style="font-size:12px;color:var(--text-t);padding:8px 0">🌤 天気データを取得中…</div>';
-
-  const apiUrl=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
-    +`&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,precipitation`
-    +`&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max`
-    +`&timezone=Asia%2FTokyo&forecast_days=7`;
-
-  // プロキシを順番に試す
-  const proxies=[
-    url=>`https://corsproxy.io/?${encodeURIComponent(url)}`,
-    url=>`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-    url=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-  ];
-
-  for(const makeProxy of proxies){
-    try{
-      const proxyUrl=makeProxy(apiUrl);
-      const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(10000)});
-      if(!res.ok) continue;
-      const raw=await res.json();
-      // alloriginsは {contents:'...'} 形式、他は直接JSON
-      const d=(raw.contents)?JSON.parse(raw.contents):raw;
-      if(!d||!d.current||!d.daily) continue;
-      renderWeatherLive(d, targetEl, nameEl, compact);
-      return; // 成功したら終了
-    }catch(e){ continue; }
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
+      +`&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,precipitation`
+      +`&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max`
+      +`&timezone=Asia%2FTokyo&forecast_days=7`;
+    const res=await fetch(url,{signal:AbortSignal.timeout(10000)});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const d=await res.json();
+    if(!d||!d.current||!d.daily) throw new Error('データ形式エラー');
+    renderWeatherLive(d, targetEl, nameEl, compact);
+  }catch(e){
+    if(targetEl) targetEl.innerHTML=`<div style="font-size:12px;color:var(--danger-text);padding:8px 0">⚠️ 天気データの取得に失敗しました<br><span style="font-size:10px;color:var(--text-t)">${e.message}</span></div>`;
+    if(nameEl) nameEl.textContent='— 取得失敗';
   }
-  // 全プロキシ失敗
-  if(targetEl) targetEl.innerHTML=`<div style="font-size:12px;color:var(--danger-text);padding:8px 0">
-    ⚠️ 天気データの取得に失敗しました<br>
-    <span style="font-size:10px;color:var(--text-t)">ネットワーク接続をご確認ください</span></div>`;
-  if(nameEl) nameEl.textContent='— 取得失敗';
 }
 
 function renderWeatherLive(d, el, nameEl, compact){
@@ -519,9 +502,8 @@ async function fetchWeatherGPS(){
       // 逆ジオコーディングで地名取得
       try{
         const geoUrl=`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ja`;
-        const gr=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(geoUrl),{signal:AbortSignal.timeout(8000)});
-        const grj=await gr.json();
-        const gd=JSON.parse(grj.contents);
+        const gr=await fetch(geoUrl,{signal:AbortSignal.timeout(8000)});
+        const gd=await gr.json();
         const city=gd.address.city||gd.address.town||gd.address.village||gd.address.county||'現在地';
         nameEl.textContent=`— ${city}（現在地）`;
       }catch{nameEl.textContent='— 現在地';}
@@ -685,7 +667,7 @@ function renderEvents(){
 // sortDate: 並び順用の最初の開催日（YYYY/M/D）
 // sunDates: 今週日曜の「M/D」と一致→「今週末」にも表示
 const EVENTS2=[
-  {area2:'osaka',   name:'長居蚤の市',              meta:'長居公園 ／ 3/15（日）・22（土）2日間',                       scale:[1,1,1,1,0],scaleText:'大規模',              sortDate:'2026/3/15',  url:'https://nagai-nominoichi.com',                     sunDates:['3/15']},
+  {area2:'osaka',   name:'長居蚤の市',              meta:'長居公園 南西広場 ／ 3/21（土）・22（日）2日間 ／ 入場無料・雨天中止',  scale:[1,1,1,1,0],scaleText:'大規模',              sortDate:'2026/3/21',  url:'https://nagaipark.com/',                           sunDates:['3/22']},
   {area2:'kyoto',   name:'京都アンティークフェア',   meta:'パルスプラザ ／ 3/27（金）〜29（日）3日間 ／ 屋内・雨天OK',   scale:[1,1,1,1,1],scaleText:'約300店・西日本最大級',  sortDate:'2026/3/27',  url:'http://www.gomoku-do.com',                         sunDates:['3/29']},
   {area2:'okayama', name:'岡山・京橋朝市',            meta:'岡山市 京橋 ／ 毎月第1日曜 7:00〜12:00 ／ 野菜・鮮魚・手作り品',scale:[1,1,1,0,0],scaleText:'中〜大規模・老舗朝市',  sortDate:'2026/4/5',   url:'https://kyobashi-asaichi.com',                     sunDates:['4/5','5/3']},
   {area2:'osaka',   name:'枚方蚤の市',               meta:'ニッペパーク岡東中央 ／ 4/5（土）・6（日）2日間',             scale:[1,1,1,1,0],scaleText:'大規模',              sortDate:'2026/4/5',   url:'https://hirakata-nominoichi.com',                  sunDates:['4/6']},
