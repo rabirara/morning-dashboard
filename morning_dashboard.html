@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>朝のダッシュボード</title>
+<style>
+:root{
+  --bg:#f5f4f0;--card:#ffffff;--border:rgba(0,0,0,0.1);--border-mid:rgba(0,0,0,0.18);
+  --text:#1a1a18;--text-s:#5a5a55;--text-t:#9a9990;--surf:#f0efe9;
+  --info-bg:#e8f2fb;--info-text:#0c447c;--info-border:#b5d4f4;
+  --success-bg:#eaf3de;--success-text:#27500a;
+  --warn-bg:#faeeda;--warn-text:#633806;
+  --danger-bg:#fcebeb;--danger-text:#791f1f;
+  --teal-bg:#e1f5ee;--teal-text:#085041;
+  --purple-bg:#eeedfe;--purple-text:#3c3489;
+  --coral-bg:#faece7;--coral-text:#712b13;
+  --gray-bg:#f1efe8;--gray-text:#444441;
+  --pink-bg:#fbeaf0;--pink-text:#72243e;
+  --r:12px;--rs:8px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1a1a18;--card:#242420;--border:rgba(255,255,255,0.1);--border-mid:rgba(255,255,255,0.18);
+  --text:#e8e6de;--text-s:#a8a69e;--text-t:#68665e;--surf:#2a2a26;
+  --info-bg:#0c2a42;--info-text:#85b7eb;--info-border:#185fa5;
+  --success-bg:#173404;--success-text:#97c459;
+  --warn-bg:#412402;--warn-text:#fac775;
+  --danger-bg:#501313;--danger-text:#f09595;
+  --teal-bg:#04342c;--teal-text:#5dcaa5;
+  --purple-bg:#26215c;--purple-text:#afa9ec;
+  --coral-bg:#4a1b0c;--coral-text:#f0997b;
+  --gray-bg:#2c2c2a;--gray-text:#b4b2a9;
+  --pink-bg:#4b1528;--pink-text:#ed93b1;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;padding:16px}
+.db-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.db-title{font-size:20px;font-weight:700}
+.db-date{font-size:12px;color:var(--text-t);margin-top:2px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.col{display:flex;flex-direction:column;gap:12px}
+.mb12{margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px}
+.slbl{font-size:10px;font-weight:700;color:var(--text-t);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.b-teal{background:var(--teal-bg);color:var(--teal-text)}.b-amber{background:var(--warn-bg);color:var(--warn-text)}
+.b-green{background:var(--success-bg);color:var(--success-text)}.b-blue{background:var(--info-bg);color:var(--info-text)}
+.b-purple{background:var(--purple-bg);color:var(--purple-text)}.b-red{background:var(--danger-bg);color:var(--danger-text)}
+.b-gray{background:var(--surf);color:var(--text-s)}.b-coral{background:var(--coral-bg);color:var(--coral-text)}
+
+/* ---- 天気 ---- */
+.w-main{display:flex;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.w-icon{font-size:36px;line-height:1;flex-shrink:0}
+.w-temp{font-size:26px;font-weight:700;line-height:1}
+.w-desc{font-size:12px;color:var(--text-s);margin-top:3px}
+.w-meta{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.wmi{background:var(--surf);border-radius:var(--rs);padding:5px 8px;text-align:center;flex:1;min-width:46px}
+.wmiv{font-size:13px;font-weight:700;color:var(--text)}.wmil{font-size:10px;color:var(--text-t)}
+canvas.gc{display:block;width:100%}
+.wk-wrap{margin-top:10px}
+.wk-lbl{font-size:10px;color:var(--text-t);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.wk-scr{display:flex;gap:4px;overflow-x:auto;padding-bottom:3px}
+.wk-scr::-webkit-scrollbar{height:3px}
+.wk-scr::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:2px}
+.wkd{flex-shrink:0;width:56px;border-radius:var(--rs);padding:6px 3px;text-align:center;border:1px solid var(--border);background:var(--surf)}
+.wkd.tod{background:var(--info-bg);border-color:var(--info-border)}
+.wkdn{font-size:10px;color:var(--text-t)}.wkdn.tod{color:var(--info-text)}
+.wkdt{font-size:9px;color:var(--text-t)}.wkic{font-size:15px;margin:2px 0}
+.wkt{font-size:11px;font-weight:700;color:var(--text)}.wkt span{font-size:10px;color:var(--text-t);font-weight:400}
+.wkr{font-size:9px;color:var(--text-t)}
+/* 地域ボタン */
+.reg-btns{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.reg-btn{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border-mid);background:transparent;color:var(--text-s);cursor:pointer;transition:all .15s}
+.reg-btn:hover{background:var(--surf)}.reg-btn.open{background:var(--info-bg);color:var(--info-text);border-color:var(--info-border)}
+.reg-detail{margin-top:8px;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ---- タブ ---- */
+.tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.tab{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border-mid);background:transparent;color:var(--text-s);cursor:pointer;transition:all .15s}
+.tab.active{background:var(--info-bg);color:var(--info-text);border-color:var(--info-border)}
+.tab:hover:not(.active){background:var(--surf)}
+.panel{display:none}.panel.show{display:block}
+
+/* ---- リンク ---- */
+.rlink{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--info-text);padding:5px 10px;border:1px solid var(--info-border);border-radius:var(--rs);text-decoration:none;background:var(--card);transition:all .15s}
+.rlink:hover{background:var(--info-bg)}
+.elink{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--info-text);padding:5px 10px;border:1px solid var(--info-border);border-radius:var(--rs);text-decoration:none;transition:all .15s}
+.elink:hover{background:var(--info-bg)}
+.evl{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--info-text);margin-top:4px;text-decoration:none}
+.evl:hover{text-decoration:underline}
+.abtn{width:100%;margin-top:8px;padding:7px 10px;font-size:12px;border-radius:var(--rs);border:1px solid var(--border-mid);background:transparent;color:var(--text-s);cursor:pointer;text-align:left;transition:all .15s}
+.abtn:hover{background:var(--surf)}
+
+/* ---- rows ---- */
+.row{padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.row:last-child{border-bottom:none}
+.rl{flex:1;min-width:0}.rn{font-size:13px;font-weight:600;color:var(--text)}
+.rs{font-size:11px;color:var(--text-t);margin-top:2px;line-height:1.5}
+.rr{font-size:11px;color:var(--text-s);white-space:nowrap;flex-shrink:0;text-align:right}
+.scale{display:flex;align-items:center;gap:3px;margin-top:3px}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--border-mid)}
+.sg{background:#1d9e75}.sm{background:#ef9f27}
+.stxt{font-size:10px;color:var(--text-t)}
+
+/* ---- イベント（5×5カードグリッド） ---- */
+.ev-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.ev-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--rs);padding:9px 10px;display:flex;flex-direction:column;gap:3px;transition:all .15s;cursor:default;position:relative;overflow:hidden}
+.ev-card:hover{border-color:var(--border-mid);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.07)}
+.ev-card a{text-decoration:none;color:inherit;display:contents}
+.ev-area-badge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;display:inline-block;margin-bottom:2px;white-space:nowrap;align-self:flex-start}
+.ar-osaka{background:var(--info-bg);color:var(--info-text)}
+.ar-kyoto{background:var(--purple-bg);color:var(--purple-text)}
+.ar-hyogo{background:var(--teal-bg);color:var(--teal-text)}
+.ar-nara{background:var(--success-bg);color:var(--success-text)}
+.ar-shiga{background:var(--warn-bg);color:var(--warn-text)}
+.ar-wakayama{background:var(--coral-bg);color:var(--coral-text)}
+.ar-aichi{background:var(--danger-bg);color:var(--danger-text)}
+.ar-mie{background:var(--gray-bg);color:var(--gray-text)}
+.ar-tokushima{background:var(--pink-bg);color:var(--pink-text)}
+.ev-name{font-size:11px;font-weight:700;color:var(--text);line-height:1.35}
+.ev-meta{font-size:10px;color:var(--text-t);line-height:1.4;flex:1}
+.ev-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:4px;flex-wrap:wrap;gap:3px}
+.ev-card.hidden{display:none}
+.scale{display:flex;align-items:center;gap:2px}
+.sd{width:5px;height:5px;border-radius:50%;background:var(--border-mid)}
+.sg{background:#1d9e75}.sm{background:#ef9f27}
+.stxt{font-size:9px;color:var(--text-t);margin-left:3px}
+.evl{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--info-text);text-decoration:none}
+.evl:hover{text-decoration:underline}
+@media(max-width:900px){.ev-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.ev-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---- 開店閉店 ---- */
+
+.nbadge{font-size:10px;padding:1px 5px;background:var(--success-bg);color:var(--success-text);border-radius:20px;font-weight:600;margin-left:4px}
+.cbadge{font-size:10px;padding:1px 5px;background:var(--danger-bg);color:var(--danger-text);border-radius:20px;font-weight:600;margin-left:4px}
+.pbadge{font-size:10px;padding:1px 5px;background:var(--purple-bg);color:var(--purple-text);border-radius:20px;font-weight:600;margin-left:4px}
+.sub-hd{font-size:10px;font-weight:700;color:var(--text-t);margin:9px 0 5px;letter-spacing:.05em}
+
+/* ---- 倉庫市・工場直売 AI検索 ---- */
+.factory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.factory-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--rs);padding:10px 11px;display:flex;flex-direction:column;gap:4px;transition:all .15s}
+.factory-card:hover{border-color:var(--border-mid);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.07)}
+.factory-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;background:var(--warn-bg);color:var(--warn-text);align-self:flex-start}
+.factory-name{font-size:12px;font-weight:700;color:var(--text);line-height:1.35}
+.factory-meta{font-size:10px;color:var(--text-t);line-height:1.5;flex:1}
+.factory-footer{display:flex;align-items:center;justify-content:space-between;margin-top:3px}
+.factory-src{font-size:9px;color:var(--text-t)}
+.ai-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-t);margin-bottom:8px}
+.ai-dot{width:7px;height:7px;border-radius:50%;background:var(--border-mid);flex-shrink:0}
+.ai-dot.loading{background:#f59e0b;animation:pulse 1s infinite}
+.ai-dot.done{background:#1d9e75}
+.ai-dot.error{background:#e05252}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.kw-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.kw-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--surf);color:var(--text-s);border:1px solid var(--border);cursor:pointer;transition:all .12s}
+.kw-tag.on{background:var(--warn-bg);color:var(--warn-text);border-color:transparent}
+.factory-empty{text-align:center;padding:20px;color:var(--text-t);font-size:12px}
+@media(max-width:700px){.factory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.factory-grid{grid-template-columns:1fr}}
+
+/* ---- 釣果スポット ---- */
+.spot-panel{display:none}.spot-panel.show{display:block}
+canvas.tc{display:block;width:100%;margin-top:6px}
+.tide-info{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.tide-item{background:var(--surf);border-radius:var(--rs);padding:3px 8px;font-size:11px;color:var(--text-s)}
+.tide-item span{font-weight:700;color:var(--text)}
+
+/* ---- Sai/Sakana links ---- */
+.link-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
+/* ---- Radar links ---- */
+.radar-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+
+/* ---- 船カード ---- */
+.ship-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-bottom:8px}
+.ship-card{background:var(--surf);border-radius:var(--rs);padding:7px 9px;border:1px solid var(--border)}
+.ship-name{font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ship-fish{font-size:10px;color:var(--text-t);line-height:1.4}
+
+/* 魚種グリッド */
+.fish-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:8px}
+.fish-tag{background:var(--surf);border-radius:var(--rs);padding:5px 7px;text-align:center;border:1px solid var(--border)}
+.fish-nm{font-size:11px;font-weight:600;color:var(--text)}
+.fish-ss{font-size:9px;color:var(--text-t);margin-top:1px}
+.now-badge{font-size:9px;padding:1px 4px;background:var(--success-bg);color:var(--success-text);border-radius:10px;font-weight:600;margin-left:2px;vertical-align:middle}
+
+/* info-box */
+.info-box{background:var(--surf);border-radius:var(--rs);padding:9px 11px;margin-bottom:8px}
+.info-row{display:flex;align-items:baseline;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px}
+.info-row:last-child{border-bottom:none}
+.info-lbl{color:var(--text-t);min-width:70px;flex-shrink:0;font-size:11px}
+.info-val{color:var(--text);font-weight:600;flex:1}
+
+/* today-info */
+.today-info{border-left:3px solid #1d9e75;padding:6px 10px;background:var(--surf);border-radius:0 var(--rs) var(--rs) 0;margin-bottom:10px}
+.today-date{font-size:10px;color:var(--text-t);margin-bottom:2px}
+.today-text{font-size:12px;font-weight:700;color:var(--text);line-height:1.6}
+
+/* hidden-msg（非表示期間は枠自体なし → JSで要素ごと消す） */
+
+@media(max-width:700px){
+  .g2,.g3{grid-template-columns:1fr}
+  .ship-grid{grid-template-columns:1fr}
+  .fish-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="db-hd">
+  <div><div class="db-title">おはようございます</div><div class="db-date" id="tlbl"></div></div>
+</div>
+
+<div class="g2">
+  <!-- ===== 天気カード ===== -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;flex-wrap:wrap;gap:6px">
+      <div class="slbl" style="margin-bottom:0">天気予報 <span id="w-location-name" style="font-weight:400;color:var(--text-t)">— 読み込み中…</span></div>
+      <button onclick="fetchWeatherGPS()" style="font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--border-mid);background:transparent;color:var(--text-s);cursor:pointer">📍 現在地を取得</button>
+    </div>
+    <div id="p-matsu"><div style="font-size:12px;color:var(--text-t);padding:8px 0">天気データを読み込み中…</div></div>
+
+    <!-- 他地域ボタン（クリックで展開） -->
+    <div class="reg-btns" id="reg-btns">
+      <span style="font-size:11px;color:var(--text-t);align-self:center">固定地点：</span>
+      <button class="reg-btn" onclick="toggleReg('waka',this)">和歌山市</button>
+      <button class="reg-btn" onclick="toggleReg('minami',this)">和歌山南部</button>
+      <button class="reg-btn" onclick="toggleReg('awaji',this)">淡路島</button>
+      <button class="reg-btn" onclick="toggleReg('harima',this)">播磨</button>
+    </div>
+    <div id="reg-detail-wrap"></div>
+
+    <!-- レーダー -->
+    <div class="radar-links">
+      <a class="rlink" href="https://www.river.go.jp/kawabou/pc/rd?rid=3&tabId=rd" target="_blank">川の防災 レーダー</a>
+      <a class="rlink" href="https://www.jma.go.jp/bosai/nowc/" target="_blank">気象庁 雨雲</a>
+      <a class="rlink" href="https://tenki.jp/radar/6/" target="_blank">tenki.jp</a>
+    </div>
+  </div>
+
+  <!-- ===== 右カラム ===== -->
+  <div class="col">
+    <!-- 雑賀崎（水・日のみ） -->
+    <div id="saikazaki-wrap"></div>
+
+    <!-- さかな村（土18時以降・日のみ） -->
+    <div id="sakana-wrap"></div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== 倉庫市・工場直売 AI検索 ===== -->
+<div class="mb12">
+  <div class="card">
+    <div class="slbl">倉庫市・工場直売・アウトレット <span style="font-size:10px;font-weight:400;color:var(--text-t)">— 号外NET 29エリアをAIで自動収集・直近1ヶ月のイベントを抽出</span></div>
+    <!-- キーワードタグ（ON/OFFトグル） -->
+    <div style="font-size:10px;color:var(--text-t);margin-bottom:5px">🔖 検索キーワード：<span style="color:var(--warn-text);font-weight:700">オレンジ＝検索対象</span>　クリックでグレーにすると除外できます</div>
+    <div class="kw-tags" id="kw-tags">
+      <span style="font-size:10px;color:var(--text-t);align-self:center;margin-right:2px"></span>
+      <button class="kw-tag on" data-kw="倉庫市">倉庫市</button>
+      <button class="kw-tag on" data-kw="倉庫開放">倉庫開放</button>
+      <button class="kw-tag on" data-kw="倉庫バーゲン">倉庫バーゲン</button>
+      <button class="kw-tag on" data-kw="工場直売">工場直売</button>
+      <button class="kw-tag on" data-kw="ファクトリーショップ">ファクトリーショップ</button>
+      <button class="kw-tag on" data-kw="アウトレット">アウトレット</button>
+      <button class="kw-tag on" data-kw="訳あり">訳あり</button>
+      <button class="kw-tag on" data-kw="規格外">規格外</button>
+      <button class="kw-tag on" data-kw="大蔵ざらえ">大蔵ざらえ</button>
+      <button class="kw-tag on" data-kw="大売り出し">大売り出し</button>
+      <button class="kw-tag on" data-kw="感謝祭">感謝祭</button>
+      <button class="kw-tag on" data-kw="限定開放">限定開放</button>
+      <button class="kw-tag on" data-kw="放出市">放出市</button>
+      <button class="kw-tag on" data-kw="即売会">即売会</button>
+    </div>
+    <div class="ai-status"><div class="ai-dot" id="ai-dot"></div><span id="ai-status-txt">「検索開始」を押すと号外NETの最新記事をAIが解析します</span></div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+      <button onclick="runFactorySearch()" style="font-size:12px;padding:5px 14px;border-radius:var(--rs);border:none;background:var(--warn-bg);color:var(--warn-text);font-weight:700;cursor:pointer" id="search-btn">🔍 検索開始</button>
+      <button onclick="clearFactoryResults()" style="font-size:11px;padding:5px 12px;border-radius:var(--rs);border:1px solid var(--border-mid);background:transparent;color:var(--text-s);cursor:pointer">クリア</button>
+      <button onclick="showDemoCards()" style="font-size:11px;padding:5px 12px;border-radius:var(--rs);border:1px solid var(--border-mid);background:transparent;color:var(--text-s);cursor:pointer">👁 表示プレビュー</button>
+      <span style="font-size:10px;color:var(--text-t);align-self:center" id="factory-count"></span>
+    </div>
+    <div class="factory-grid" id="factory-list"></div>
+  </div>
+</div>
+
+<!-- ===== イベント（コンパクト） ===== -->
+<div class="mb12">
+  <div class="card">
+    <div class="slbl">今週末のイベント</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+      <span style="font-size:11px;color:var(--text-t)">エリア：</span>
+      <button class="tab active" onclick="filterEv('all',this)" style="font-size:11px;padding:2px 8px">すべて</button>
+      <button class="tab" onclick="filterEv('osaka',this)" style="font-size:11px;padding:2px 8px">大阪</button>
+      <button class="tab" onclick="filterEv('kyoto',this)" style="font-size:11px;padding:2px 8px">京都</button>
+      <button class="tab" onclick="filterEv('hyogo',this)" style="font-size:11px;padding:2px 8px">兵庫</button>
+      <button class="tab" onclick="filterEv('nara',this)" style="font-size:11px;padding:2px 8px">奈良</button>
+      <button class="tab" onclick="filterEv('shiga',this)" style="font-size:11px;padding:2px 8px">滋賀</button>
+      <button class="tab" onclick="filterEv('wakayama',this)" style="font-size:11px;padding:2px 8px">和歌山</button>
+      <button class="tab" onclick="filterEv('aichi',this)" style="font-size:11px;padding:2px 8px">愛知</button>
+      <button class="tab" onclick="filterEv('mie',this)" style="font-size:11px;padding:2px 8px">三重</button>
+      <button class="tab" onclick="filterEv('tokushima',this)" style="font-size:11px;padding:2px 8px">徳島</button>
+    </div>
+    <div style="font-size:11px;color:var(--text-t);margin-bottom:6px" id="ev-count"></div>
+    <div class="ev-grid" id="ev-list">
+      <!-- 各イベントはJSで生成 -->
+    </div>
+    <button class="abtn" onclick="window.open('https://www.google.com/search?q=今週末+関西+フリマ+マルシェ+朝市+骨董市','_blank')">もっと探す →</button>
+  </div>
+</div>
+
+<div class="g2">
+  <!-- ===== 1〜2ヶ月先 ===== -->
+  <div class="card">
+    <div class="slbl">1〜2ヶ月先の大型イベント <span style="font-size:10px;font-weight:400;color:var(--text-t)">（遠出・事前計画向け ／ 今週開催のものは「今週末」にも表示）</span></div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="tab active" onclick="filterEv2('all',this)" style="font-size:11px;padding:2px 8px">すべて</button>
+      <button class="tab" onclick="filterEv2('osaka',this)" style="font-size:11px;padding:2px 8px">大阪</button>
+      <button class="tab" onclick="filterEv2('kyoto',this)" style="font-size:11px;padding:2px 8px">京都</button>
+      <button class="tab" onclick="filterEv2('hyogo',this)" style="font-size:11px;padding:2px 8px">兵庫</button>
+      <button class="tab" onclick="filterEv2('shiga',this)" style="font-size:11px;padding:2px 8px">滋賀</button>
+      <button class="tab" onclick="filterEv2('wakayama',this)" style="font-size:11px;padding:2px 8px">和歌山</button>
+      <button class="tab" onclick="filterEv2('aichi',this)" style="font-size:11px;padding:2px 8px">愛知</button>
+      <button class="tab" onclick="filterEv2('okayama',this)" style="font-size:11px;padding:2px 8px">岡山</button>
+      <button class="tab" onclick="filterEv2('gifu',this)" style="font-size:11px;padding:2px 8px">岐阜</button>
+      <button class="tab" onclick="filterEv2('shizuoka',this)" style="font-size:11px;padding:2px 8px">静岡</button>
+      <button class="tab" onclick="filterEv2('fukui',this)" style="font-size:11px;padding:2px 8px">福井</button>
+    </div>
+    <div id="ev2-list"></div>
+    <button class="abtn" onclick="window.open('https://www.google.com/search?q=4月5月+関西+蚤の市+マルシェ+大型','_blank')">先のイベントを調べる →</button>
+  </div>
+
+  <!-- ===== 開店・閉店 ===== -->
+  <div class="card">
+    <div class="slbl">スーパー・商業施設 開店・閉店</div>
+    <div class="sub-hd">— 最近・オープン済み（過去〜1年）</div>
+    <div class="row">
+      <div class="rl"><div class="rn">ロピア 堺三国ヶ丘店<span class="nbadge">NEW</span></div><div class="rs">大阪・堺市 ／ 2026年3月6日 ／ イートイン併設</div></div>
+      <div class="rr"><a class="evl" href="https://kaiten-heiten-24.com/?s=ロピア+堺" target="_blank">記事 →</a></div>
+    </div>
+    <div class="row">
+      <div class="rl"><div class="rn">スーパーオオジ 武庫之荘北店<span class="nbadge">NEW</span></div><div class="rs">兵庫・尼崎 ／ 2026年3月1日</div></div>
+      <div class="rr"><a class="evl" href="https://kaiten-heiten-24.com/?s=オオジ" target="_blank">記事 →</a></div>
+    </div>
+    <div class="row">
+      <div class="rl"><div class="rn">TSUTAYA 府大前店<span class="cbadge">閉店</span></div><div class="rs">大阪府 ／ 2026年2月末</div></div>
+    </div>
+    <div class="row">
+      <div class="rl"><div class="rn">そよら長原駅前 イオンスタイル<span class="nbadge">NEW</span></div><div class="rs">大阪市・東住吉区 ／ 2025年4月オープン済み</div></div>
+      <div class="rr"><a class="evl" href="https://kaiten-heiten-24.com/?s=そよら+長原" target="_blank">記事 →</a></div>
+    </div>
+    <div class="row">
+      <div class="rl"><div class="rn">ロピア 岸和田店<span class="nbadge">NEW</span></div><div class="rs">大阪・岸和田 ／ 2025年6月オープン済み</div></div>
+      <div class="rr"><a class="evl" href="https://kaiten-heiten-24.com/?s=ロピア+岸和田" target="_blank">記事 →</a></div>
+    </div>
+    <div class="sub-hd">— 今後の予定（〜半年先）</div>
+    <div class="row">
+      <div class="rl"><div class="rn">LUCUA SOUTH<span class="pbadge">予定</span></div><div class="rs">大阪・梅田 ／ 2026年4月初旬〜段階開業</div></div>
+      <div class="rr"><a class="evl" href="https://kaiten-heiten-24.com/?s=ルクア" target="_blank">記事 →</a></div>
+    </div>
+    <div class="row">
+      <div class="rl"><div class="rn">イオンタウンあびこ駅前<span class="pbadge">予定</span></div><div class="rs">大阪・住吉区 ／ 2026年春</div></div>
+    </div>
+    <div class="sub-hd" style="margin-top:10px">— 情報収集先</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+      <a class="rlink" href="https://kaiten-heiten-24.com/area-open/" target="_blank">開店閉店.com</a>
+      <a class="rlink" href="https://sakai-news.jp/category/newface" target="_blank">さかにゅー</a>
+      <a class="rlink" href="https://higashiosaka.goguynet.jp/category/cat_openclose/" target="_blank">号外NET東大阪</a>
+      <a class="rlink" href="https://sakaikita-higashi-mihara.goguynet.jp/category/cat_openclose/" target="_blank">号外NET堺北</a>
+      <a class="rlink" href="https://kanku-area.goguynet.jp/category/cat_openclose/" target="_blank">号外NET泉州</a>
+      <a class="rlink" href="https://www.jcsc.or.jp/sc_data/sc_open/daitenhou" target="_blank">大店立地法（予定）</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS=['日','月','火','水','木','金','土'];
+const NOW=new Date();
+const DOW=NOW.getDay(),HOUR=NOW.getHours();
+document.getElementById('tlbl').textContent=NOW.getFullYear()+'年'+(NOW.getMonth()+1)+'月'+NOW.getDate()+'日（'+DAYS[DOW]+'）';
+
+// ===== 天気（Open-Meteo リアルタイム取得） =====
+
+// WMOコード→天気説明・絵文字
+const WMO={
+  0:'☀ 快晴',1:'🌤 晴れ',2:'⛅ 晴れ時々曇り',3:'☁ 曇り',
+  45:'🌫 霧',48:'🌫 霧氷',
+  51:'🌦 霧雨',53:'🌦 霧雨',55:'🌧 霧雨(強)',
+  61:'🌧 小雨',63:'🌧 雨',65:'🌧 大雨',
+  71:'🌨 小雪',73:'🌨 雪',75:'❄ 大雪',80:'🌦 にわか雨',81:'🌧 雨',82:'⛈ 強雨',
+  95:'⛈ 雷雨',96:'⛈ 雷雨＋雹',99:'⛈ 激しい雷雨'
+};
+function wmoIcon(c){const s=WMO[c]||'🌡';return s.split(' ')[0];}
+function wmoDesc(c){const s=WMO[c]||'不明';return s.split(' ').slice(1).join(' ');}
+
+// 固定地点（他地域ボタン用）
+const FIXED_LOCS={
+  waka:  {name:'和歌山市',   lat:34.2261, lon:135.1675},
+  minami:{name:'和歌山南部（田辺）',lat:33.7333, lon:135.3667},
+  awaji: {name:'淡路島',    lat:34.4500, lon:134.9000},
+  harima:{name:'播磨（姫路）',lat:34.8394, lon:134.6939},
+};
+
+async function fetchWeather(lat, lon, targetEl, nameEl, compact=false){
+  if(nameEl) nameEl.textContent='— 取得中…';
+  if(targetEl) targetEl.innerHTML='<div style="font-size:12px;color:var(--text-t);padding:8px 0">🌤 天気データを取得中…</div>';
+
+  const apiUrl=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
+    +`&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,precipitation`
+    +`&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max`
+    +`&timezone=Asia%2FTokyo&forecast_days=7`;
+
+  // プロキシを順番に試す
+  const proxies=[
+    url=>`https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url=>`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    url=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  ];
+
+  for(const makeProxy of proxies){
+    try{
+      const proxyUrl=makeProxy(apiUrl);
+      const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(10000)});
+      if(!res.ok) continue;
+      const raw=await res.json();
+      // alloriginsは {contents:'...'} 形式、他は直接JSON
+      const d=(raw.contents)?JSON.parse(raw.contents):raw;
+      if(!d||!d.current||!d.daily) continue;
+      renderWeatherLive(d, targetEl, nameEl, compact);
+      return; // 成功したら終了
+    }catch(e){ continue; }
+  }
+  // 全プロキシ失敗
+  if(targetEl) targetEl.innerHTML=`<div style="font-size:12px;color:var(--danger-text);padding:8px 0">
+    ⚠️ 天気データの取得に失敗しました<br>
+    <span style="font-size:10px;color:var(--text-t)">ネットワーク接続をご確認ください</span></div>`;
+  if(nameEl) nameEl.textContent='— 取得失敗';
+}
+
+function renderWeatherLive(d, el, nameEl, compact){
+  const c=d.current;
+  const now=new Date();
+  const hIdx=d.hourly.time.findIndex(t=>t===now.toISOString().slice(0,13)+':00');
+  const curTemp=Math.round(c.temperature_2m);
+  const curTime=now.getHours()+'時'+String(now.getMinutes()).padStart(2,'0')+'分';
+  const icon=wmoIcon(c.weathercode);
+  const desc=wmoDesc(c.weathercode);
+  const wind=Math.round(c.windspeed_10m);
+  const hiTemp=Math.round(d.daily.temperature_2m_max[0]);
+  const loTemp=Math.round(d.daily.temperature_2m_min[0]);
+
+  // 週間予報
+  const weekHTML=d.daily.time.map((t,i)=>{
+    const date=new Date(t);
+    const isT=i===0;
+    const dow=['日','月','火','水','木','金','土'][date.getDay()];
+    const md=`${date.getMonth()+1}/${date.getDate()}`;
+    return `<div class="wkd${isT?' tod':''}">
+      <div class="wkdn${isT?' tod':''}">${dow}</div>
+      <div class="wkdt">${md}</div>
+      <div class="wkic">${wmoIcon(d.daily.weathercode[i])}</div>
+      <div class="wkt">${Math.round(d.daily.temperature_2m_max[i])}°<span>/${Math.round(d.daily.temperature_2m_min[i])}°</span></div>
+      <div class="wkr">${d.daily.precipitation_probability_max[i]}%</div>
+    </div>`;
+  }).join('');
+
+  // 時間別気温グラフ用データ（今から24時間）
+  const hStart=hIdx>=0?hIdx:now.getHours();
+  const hTemps=d.hourly.temperature_2m.slice(hStart,hStart+24);
+
+  const mainHTML=compact?`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap">
+      <div style="font-size:22px">${icon}</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">${curTemp}°C</div>
+        <div style="font-size:10px;color:var(--text-t)">${curTime}現在 / ${desc}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:4px;flex-wrap:wrap">
+        <div class="wmi"><div class="wmiv">${hiTemp}°</div><div class="wmil">最高</div></div>
+        <div class="wmi"><div class="wmiv">${loTemp}°</div><div class="wmil">最低</div></div>
+        <div class="wmi"><div class="wmiv">${wind}m/s</div><div class="wmil">風速</div></div>
+      </div>
+    </div>
+    <div class="wk-wrap"><div class="wk-scr">${weekHTML}</div></div>`
+  :`<div class="w-main">
+      <div class="w-icon">${icon}</div>
+      <div>
+        <div class="w-temp">${curTemp}°C</div>
+        <div class="w-desc">${desc}</div>
+        <div style="font-size:10px;color:var(--text-t);margin-top:2px">📍 ${curTime}現在</div>
+      </div>
+    </div>
+    <div class="w-meta">
+      <div class="wmi"><div class="wmiv">${hiTemp}°</div><div class="wmil">本日最高</div></div>
+      <div class="wmi"><div class="wmiv">${loTemp}°</div><div class="wmil">本日最低</div></div>
+      <div class="wmi"><div class="wmiv">${wind}m/s</div><div class="wmil">風速</div></div>
+      <div class="wmi"><div class="wmiv">${Math.round(c.apparent_temperature)}°</div><div class="wmil">体感</div></div>
+    </div>
+    <div class="wk-wrap"><div class="wk-lbl">週間予報</div><div class="wk-scr">${weekHTML}</div></div>`;
+
+  el.innerHTML=mainHTML;
+}
+
+// GPS取得して現在地の天気を表示
+async function fetchWeatherGPS(){
+  const nameEl=document.getElementById('w-location-name');
+  const el=document.getElementById('p-matsu');
+  nameEl.textContent='— 位置情報を取得中…';
+  if(!navigator.geolocation){
+    nameEl.textContent='— 位置情報が使えません';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async pos=>{
+      const {latitude:lat,longitude:lon}=pos.coords;
+      // 逆ジオコーディングで地名取得
+      try{
+        const geoUrl=`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ja`;
+        const gr=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(geoUrl),{signal:AbortSignal.timeout(8000)});
+        const grj=await gr.json();
+        const gd=JSON.parse(grj.contents);
+        const city=gd.address.city||gd.address.town||gd.address.village||gd.address.county||'現在地';
+        nameEl.textContent=`— ${city}（現在地）`;
+      }catch{nameEl.textContent='— 現在地';}
+      fetchWeather(lat, lon, el, null, false);
+    },
+    err=>{nameEl.textContent='— 位置情報の取得に失敗しました';},
+    {timeout:8000}
+  );
+}
+
+// 固定地点の展開
+let openReg=null;
+function toggleReg(key,btn){
+  const wrap=document.getElementById('reg-detail-wrap');
+  if(openReg===key){
+    wrap.innerHTML='';openReg=null;
+    document.querySelectorAll('.reg-btn').forEach(b=>b.classList.remove('open'));
+    return;
+  }
+  openReg=key;
+  document.querySelectorAll('.reg-btn').forEach(b=>b.classList.remove('open'));
+  btn.classList.add('open');
+  const loc=FIXED_LOCS[key];
+  wrap.innerHTML=`<div class="reg-detail" style="margin-top:8px;padding:10px;background:var(--surf);border-radius:var(--rs);border:1px solid var(--border)"><div style="font-size:12px;color:var(--text-t)">取得中…</div></div>`;
+  const inner=wrap.querySelector('.reg-detail');
+  document.getElementById('w-location-name');
+  fetchWeather(loc.lat, loc.lon, inner, null, true);
+}
+
+// 初期表示：松原市（固定座標）で起動
+fetchWeather(34.5711, 135.5419, document.getElementById('p-matsu'), document.getElementById('w-location-name'), false);
+document.getElementById('w-location-name').textContent='— 松原市';
+
+
+// ===== イベントデータ（今週末開催判定付き） =====
+// rule: {type:'毎週', days:[0,6]} / {type:'毎月日付', dates:[15,21]} /
+//       {type:'第N曜日', nth:[2,4], dow:0} / {type:'不定期'}
+const EVENTS=[
+  {area:'kyoto', name:'百万遍 手づくり市',       meta:'百万遍 ／ 毎月15日 8:00〜16:00 ／ 雑貨・陶器・食品',          scale:[1,1,1,1,1],scaleText:'約350〜380店・特大',  url:'https://www.tedukuri-ichi.com',         rule:{type:'毎月日付',dates:[15]}},
+  {area:'kyoto', name:'知恩寺 百万遍市',          meta:'左京区 ／ 毎月15日 ／ クラフト・骨董・食品',                  scale:[1,1,1,1,0],scaleText:'約300店・大規模',    url:'https://www.tedukuri-ichi.com',         rule:{type:'毎月日付',dates:[15]}},
+  {area:'kyoto', name:'東寺 弘法市',              meta:'南区 ／ 毎月21日 ／ 骨董・陶器・古物',                        scale:[1,1,1,1,1],scaleText:'約1200店・超大規模', url:'https://toji.or.jp/koba/',              rule:{type:'毎月日付',dates:[21]}},
+  {area:'kyoto', name:'上賀茂神社 手づくり市',    meta:'上賀茂 ／ 第4日曜 9:00〜16:00 ／ 木工・革・陶芸',            scale:[1,1,1,1,0],scaleText:'150〜200店・大規模', url:'https://kamigamo-tedukuriichi.com',     rule:{type:'第N曜日',nth:[4],dow:0}},
+  {area:'osaka', name:'田尻漁港 日曜朝市',        meta:'泉南 ／ 毎週日曜 7:00〜12:00 ／ 鮮魚・惣菜・野菜',           scale:[1,1,1,1,0],scaleText:'約50店・大規模',    url:'https://tajiri-asaichi.com', rule:{type:'毎週',days:[0]}},
+  {area:'osaka', name:'お初天神 蚤の市',          meta:'梅田 ／ 第3日曜 7:00〜15:00 ／ 骨董・古着・雑貨',            scale:[0,1,1,0,0],scaleText:'15〜40店・中規模',  url:'https://www.tuyutenjin.com/event/',     rule:{type:'第N曜日',nth:[3],dow:0}},
+  {area:'osaka', name:'天王寺公園 朝市',          meta:'阿倍野 ／ 第2日曜 9:00〜14:00 ／ 野菜・雑貨',               scale:[1,1,1,0,0],scaleText:'中規模・家族向け',  url:'https://osaka-info.jp',                rule:{type:'第N曜日',nth:[2],dow:0}},
+  {area:'osaka', name:'南港 朝市',                meta:'住之江区 ／ 第1日曜 7:00〜11:00 ／ 鮮魚・青果',             scale:[1,1,0,0,0],scaleText:'中規模・漁港直売',  url:'https://www.city.osaka.lg.jp/minato/page/0000010040.html', rule:{type:'第N曜日',nth:[1],dow:0}},
+  {area:'osaka', name:'みのおマルシェ',            meta:'箕面 ／ 第2土曜 10:00〜17:00 ／ ハンドメイド・飲食',        scale:[0,1,0,0,0],scaleText:'小〜中規模・入場無料',url:'https://minoo-marche.com',             rule:{type:'第N曜日',nth:[2],dow:6}},
+  {area:'osaka', name:'岸和田城下マルシェ',       meta:'岸和田市 ／ 不定期 ／ 食・クラフト・体験',                  scale:[0,1,0,0,0],scaleText:'小規模・地域密着',  url:'https://www.city.kishiwada.osaka.jp',   rule:{type:'不定期'}},
+  {area:'osaka', name:'大阪城 クラフトフェア',    meta:'大阪城公園 ／ 不定期 ／ 作家・クラフト作品',               scale:[1,1,1,0,0],scaleText:'中〜大規模',        url:'https://www.osakacastle.net',           rule:{type:'不定期'}},
+  {area:'hyogo', name:'神戸北野 手づくり市',      meta:'北野異人館街 ／ 不定期 ／ クラフト・雑貨',                  scale:[0,1,1,0,0],scaleText:'中規模',            url:'https://www.kobe-kitano.net',           rule:{type:'不定期'}},
+  {area:'hyogo', name:'淡路島 朝市',              meta:'淡路市 ／ 毎週土日 8:00〜12:00 ／ 新鮮野菜・鮮魚',          scale:[1,1,0,0,0],scaleText:'中規模・島の直売',  url:'https://www.awajishima-kanko.jp',       rule:{type:'毎週',days:[0,6]}},
+  {area:'hyogo', name:'明石蚤の市',              meta:'明石市 ／ 第2日曜 9:00〜15:00 ／ 古物・雑貨',               scale:[0,1,1,0,0],scaleText:'中規模',            url:'https://akashi-nominoichi.com',         rule:{type:'第N曜日',nth:[2],dow:0}},
+  {area:'nara',  name:'東大寺 手づくり市',        meta:'奈良公園周辺 ／ 不定期 ／ クラフト・陶器',                  scale:[0,1,1,0,0],scaleText:'中規模',            url:'https://www.pref.nara.jp/event/',       rule:{type:'不定期'}},
+  {area:'nara',  name:'奈良 蚤の市',              meta:'奈良市 ／ 第4日曜 ／ 骨董・古道具・クラフト',               scale:[0,1,1,0,0],scaleText:'中規模',            url:'https://nara-nominoichi.com',           rule:{type:'第N曜日',nth:[4],dow:0}},
+  {area:'shiga', name:'ブランチ大津京 マルシェ',  meta:'大津京 ／ 月1〜2回 ／ グルメ・クラフト・体験',              scale:[1,1,1,1,0],scaleText:'大規模・出店多数',  url:'https://branch-sc.com/otsukyoto/',      rule:{type:'不定期'}},
+  {area:'shiga', name:'八幡堀まつり',             meta:'近江八幡 ／ 毎月第2土日 ／ クラフト・体験',                 scale:[1,1,0,0,0],scaleText:'中規模・景観良好',  url:'https://www.omi8.com',                  rule:{type:'第N曜日',nth:[2],dow:6}},
+  {area:'wakayama',name:'和歌山城 城下マルシェ',  meta:'和歌山市 ／ 不定期 ／ 地元食材・クラフト',                  scale:[0,1,0,0,0],scaleText:'小〜中規模',        url:'https://www.wakayama-kanko.or.jp/events/', rule:{type:'不定期'}},
+  {area:'wakayama',name:'紀の川マルシェ',         meta:'紀の川市 ／ 第3日曜 9:00〜 ／ 農産物・手作り品',           scale:[0,1,0,0,0],scaleText:'小〜中規模',        url:'https://www.kinokawa-dmo.com/',           rule:{type:'第N曜日',nth:[3],dow:0}},
+  {area:'aichi', name:'オアシス21 有機朝市村',    meta:'名古屋・栄 ／ 毎週土曜 8:30〜11:30 ／ 有機野菜',           scale:[1,1,1,0,0],scaleText:'中〜大規模・雨天開催',url:'https://www.oasis21.co.jp',            rule:{type:'毎週',days:[6]}},
+  {area:'aichi', name:'名古屋 堀川マルシェ',      meta:'中区 ／ 第2・第4日曜 10:00〜16:00 ／ 雑貨・食',           scale:[0,1,1,0,0],scaleText:'中規模',            url:'https://horikawa-marche.jp',            rule:{type:'第N曜日',nth:[2,4],dow:0}},
+  {area:'mie',   name:'VISON 燦燦市',             meta:'多気町 ／ 第3日曜 9:00〜 ／ まぐろ解体・伊勢海老汁',       scale:[1,1,1,1,1],scaleText:'施設73店＋特別出店',url:'https://vison.jp/news/sansanichi/',     rule:{type:'第N曜日',nth:[3],dow:0}},
+  {area:'mie',   name:'伊勢神宮 朝市',            meta:'伊勢市 ／ 不定期 ／ 地元食材・お伊勢さん参り',             scale:[0,1,1,0,0],scaleText:'中規模',            url:'https://www.isejingu.or.jp',            rule:{type:'不定期'}},
+  {area:'tokushima',name:'阿波おどり マルシェ',   meta:'徳島市 ／ 不定期 ／ 地元産品・手作り品',                   scale:[0,1,0,0,0],scaleText:'小規模・徳島密着',  url:'https://www.city.tokushima.tokushima.jp', rule:{type:'不定期'}},
+];
+
+const areaLabel={osaka:'大阪',kyoto:'京都',hyogo:'兵庫',nara:'奈良',shiga:'滋賀',wakayama:'和歌山',aichi:'愛知',mie:'三重',tokushima:'徳島',okayama:'岡山',gifu:'岐阜',shizuoka:'静岡',fukui:'福井'};
+const areaClass={osaka:'ar-osaka',kyoto:'ar-kyoto',hyogo:'ar-hyogo',nara:'ar-nara',shiga:'ar-shiga',wakayama:'ar-wakayama',aichi:'ar-aichi',mie:'ar-mie',tokushima:'ar-tokushima',okayama:'ar-hyogo',gifu:'ar-mie',shizuoka:'ar-coral',fukui:'ar-shiga'};
+
+// ---- 今週の日曜日の日付を求める ----
+function getThisWeekend(){
+  const t=new Date(NOW);
+  const dow=t.getDay(); // 0=日,6=土
+  const sun=new Date(t);
+  if(dow===0){
+    // 今日が日曜
+  } else if(dow===6){
+    // 今日が土曜→明日が日曜
+    sun.setDate(t.getDate()+1);
+  } else {
+    // 平日→次の日曜
+    sun.setDate(t.getDate()+(7-dow));
+  }
+  return [null, sun];
+}
+
+// ---- 指定日にイベントが開催されるか判定 ----
+function isEventOn(rule, date){
+  if(!date||!rule||rule.type==='不定期') return false;
+  const d=date.getDate(), dow=date.getDay();
+  const nthOfMonth=Math.ceil(d/7);
+  if(rule.type==='毎週')      return rule.days.includes(dow);
+  if(rule.type==='毎月日付')  return rule.dates.includes(d);
+  if(rule.type==='第N曜日')   return rule.dow===dow && rule.nth.includes(nthOfMonth);
+  return false;
+}
+
+// ---- 日曜開催ラベルを生成 ----
+function getWeekendLabel(rule){
+  const [, sun]=getThisWeekend();
+  const onSun=isEventOn(rule, sun);
+  if(onSun) return {label:'日曜開催', cls:'b-green'};
+  if(rule&&rule.type==='不定期') return {label:'日程要確認', cls:'b-gray'};
+  return null;
+}
+
+function renderEvents(){
+  const list=document.getElementById('ev-list');
+  list.innerHTML='';
+  let shown=0;
+  const sunLabel=getSunLabel();
+
+  // ① 1〜2ヶ月先の大型イベントのうち今週日曜開催のものを最優先で表示
+  EVENTS2.filter(ev=>ev.sunDates.includes(sunLabel)).forEach(ev=>{
+    const dots=ev.scale.map(v=>`<div class="sd ${v?'sg':''}"></div>`).join('');
+    const div=document.createElement('div');
+    div.className='ev-card'; div.dataset.area=ev.area2;
+    div.innerHTML=`
+      <span class="badge b-purple" style="font-size:9px;padding:1px 6px;margin-bottom:3px;display:inline-block">⭐ 大型イベント</span>
+      <span class="badge b-green" style="font-size:9px;padding:1px 6px;margin-bottom:3px;display:inline-block;margin-left:3px">日曜開催</span>
+      <span class="ev-area-badge ${areaClass[ev.area2]||'ar-osaka'}">${areaLabel[ev.area2]||ev.area2}</span>
+      <div class="ev-name">${ev.name}</div>
+      <div class="ev-meta">${ev.meta}</div>
+      <div class="ev-card-footer">
+        <div class="scale">${dots}<span class="stxt">${ev.scaleText}</span></div>
+        <a class="evl" href="${ev.url}" target="_blank">→</a>
+      </div>`;
+    list.appendChild(div);
+    shown++;
+  });
+
+  // ② 定期イベントのうち今週日曜開催のものを続けて表示
+  const sorted=[...EVENTS].sort((a,b)=>{
+    const la=getWeekendLabel(a.rule), lb=getWeekendLabel(b.rule);
+    const wa=(la&&la.cls==='b-green')?0:1, wb=(lb&&lb.cls==='b-green')?0:1;
+    return wa-wb;
+  });
+  sorted.forEach(ev=>{
+    const wl=getWeekendLabel(ev.rule);
+    if(!wl||wl.cls!=='b-green') return;
+    const dots=ev.scale.map(v=>`<div class="sd ${v?'sg':''}"></div>`).join('');
+    const div=document.createElement('div');
+    div.className='ev-card';div.dataset.area=ev.area;
+    div.innerHTML=`
+      <span class="badge ${wl.cls}" style="font-size:9px;padding:1px 6px;margin-bottom:3px;display:inline-block">${wl.label}</span>
+      <span class="ev-area-badge ${areaClass[ev.area]}">${areaLabel[ev.area]}</span>
+      <div class="ev-name">${ev.name}</div>
+      <div class="ev-meta">${ev.meta}</div>
+      <div class="ev-card-footer">
+        <div class="scale">${dots}<span class="stxt">${ev.scaleText}</span></div>
+        <a class="evl" href="${ev.url}" target="_blank">→</a>
+      </div>`;
+    list.appendChild(div);
+    shown++;
+  });
+
+  const hit=shown;
+  document.getElementById('ev-count').textContent=`今週日曜(${sunLabel})開催 ${hit}件`;
+}
+
+// ===== 1〜2ヶ月先の大型イベントデータ =====
+// sortDate: 並び順用の最初の開催日（YYYY/M/D）
+// sunDates: 今週日曜の「M/D」と一致→「今週末」にも表示
+const EVENTS2=[
+  {area2:'osaka',   name:'長居蚤の市',              meta:'長居公園 ／ 3/15（日）・22（土）2日間',                       scale:[1,1,1,1,0],scaleText:'大規模',              sortDate:'2026/3/15',  url:'https://nagai-nominoichi.com',                     sunDates:['3/15']},
+  {area2:'kyoto',   name:'京都アンティークフェア',   meta:'パルスプラザ ／ 3/27（金）〜29（日）3日間 ／ 屋内・雨天OK',   scale:[1,1,1,1,1],scaleText:'約300店・西日本最大級',  sortDate:'2026/3/27',  url:'http://www.gomoku-do.com',                         sunDates:['3/29']},
+  {area2:'okayama', name:'岡山・京橋朝市',            meta:'岡山市 京橋 ／ 毎月第1日曜 7:00〜12:00 ／ 野菜・鮮魚・手作り品',scale:[1,1,1,0,0],scaleText:'中〜大規模・老舗朝市',  sortDate:'2026/4/5',   url:'https://kyobashi-asaichi.com',                     sunDates:['4/5','5/3']},
+  {area2:'osaka',   name:'枚方蚤の市',               meta:'ニッペパーク岡東中央 ／ 4/5（土）・6（日）2日間',             scale:[1,1,1,1,0],scaleText:'大規模',              sortDate:'2026/4/5',   url:'https://hirakata-nominoichi.com',                  sunDates:['4/6']},
+  {area2:'osaka',   name:'北摂蚤の市',               meta:'高槻 安満遺跡公園 ／ 4/12（日）',                            scale:[1,1,1,0,0],scaleText:'中〜大規模',            sortDate:'2026/4/12',  url:'https://hokusetsu-nominoichi.com',                 sunDates:['4/12']},
+  {area2:'osaka',   name:'ロハスフェスタ万博',        meta:'万博記念公園 ／ 4/24〜26・29、5/2〜6 計8日間',               scale:[1,1,1,1,1],scaleText:'数百店・超大規模',      sortDate:'2026/4/24',  url:'https://lohasfesta.jp',                            sunDates:['4/26','5/3']},
+  {area2:'wakayama',name:'みなみのき蚤の市',          meta:'上富田町 ／ 4/26（日）10:00〜16:00',                         scale:[0,1,1,0,0],scaleText:'中規模・和歌山密着',    sortDate:'2026/4/26',  url:'https://www.instagram.com/minaminoki_nominoichi/', sunDates:['4/26']},
+  {area2:'shiga',   name:'陶芸の森 クラフトフェア',  meta:'甲賀市 ／ 4月下旬予定・土日2日間 ／ 約100組出展',            scale:[1,1,1,1,0],scaleText:'約100組・県外からも人気',sortDate:'2026/4/25',  url:'https://www.sccp.jp',                              sunDates:[]},
+  {area2:'gifu',    name:'土岐美濃焼まつり',          meta:'岐阜・土岐市 ／ 4/29〜5/1 ／ 焼き物直売・掘り出し物多数',   scale:[1,1,1,1,1],scaleText:'超大規模・年1回',        sortDate:'2026/4/29',  url:'https://www.toki-minoyakimatsuri.jp',              sunDates:['5/1']},
+  {area2:'shizuoka',name:'由比・桜えびまつり',        meta:'静岡・静岡市 ／ 5月上旬予定 ／ 生桜えび・かき揚げ丼',        scale:[1,1,1,0,0],scaleText:'漁港直売・産地限定品',  sortDate:'2026/5/3',   url:'https://www.sakuraebi.jp',                         sunDates:[]},
+  {area2:'fukui',   name:'勝山・山菜まつり',          meta:'福井・勝山市 ／ 5月上旬予定 ／ 山菜・地元食材直売',          scale:[1,1,0,0,0],scaleText:'地域密着・山の幸',      sortDate:'2026/5/3',   url:'https://www.city.katsuyama.fukui.jp',              sunDates:[]},
+  {area2:'hyogo',   name:'淡路島たまねぎまつり',      meta:'兵庫・淡路市 ／ 5〜6月予定 ／ 新玉ねぎ・淡路牛・海産物',    scale:[1,1,1,0,0],scaleText:'大規模・島の産直',      sortDate:'2026/5/10',  url:'https://www.awajishima-kanko.jp',                  sunDates:[]},
+  {area2:'hyogo',   name:'播州織産地博覧会',          meta:'西脇市 ／ 4月下旬予定 ／ テキスタイル・ハンドメイド素材',    scale:[1,1,1,1,0],scaleText:'産地直売・大規模',      sortDate:'2026/4/26',  url:'https://www.banshu-ori.jp',                        sunDates:[]},
+  {area2:'okayama', name:'児島せんいフェス',          meta:'岡山・倉敷市児島 ／ 春開催予定 ／ デニム・ジーンズ・繊維直売',scale:[1,1,1,0,0],scaleText:'産地直売・ファミリー向け',sortDate:'2026/4/19', url:'https://www.kojima-jeans.jp',                      sunDates:[]},
+  {area2:'hyogo',   name:'香住かにまつり',            meta:'兵庫・香美町 ／ 11月〜3月 ／ 松葉ガニ・香住ガニ直売',       scale:[1,1,1,0,0],scaleText:'漁港直売・産地ならでは', sortDate:'2026/11/1',  url:'https://www.kasumi-kankou.jp',                     sunDates:[]},
+  {area2:'hyogo',   name:'丹波篠山 味まつり',         meta:'兵庫・丹波篠山市 ／ 10月予定 ／ 黒豆・山の芋・丹波栗',      scale:[1,1,1,1,0],scaleText:'大規模・丹波食材総集合', sortDate:'2026/10/1',  url:'https://tourism.sasayama.jp',                      sunDates:[]},
+  {area2:'okayama', name:'児島せんいさい',            meta:'岡山・倉敷市児島 ／ 秋開催予定 ／ アウトレット・繊維製品',   scale:[1,1,1,0,0],scaleText:'産地直売・大規模',      sortDate:'2026/10/1',  url:'https://www.kojima-jeans.jp',                      sunDates:[]},
+].sort((a,b)=>new Date(a.sortDate)-new Date(b.sortDate));
+
+
+// 今週日曜の「M/D」文字列を生成
+function getSunLabel(){
+  const [,sun]=getThisWeekend();
+  return `${sun.getMonth()+1}/${sun.getDate()}`;
+}
+
+function renderEv2(){
+  const list=document.getElementById('ev2-list');
+  list.innerHTML='';
+  const sunLabel=getSunLabel();
+  const today=new Date(NOW);
+  const twoMonthsLater=new Date(NOW);
+  twoMonthsLater.setMonth(twoMonthsLater.getMonth()+2);
+
+  // 2ヶ月以内のイベントのみ表示
+  const filtered=EVENTS2.filter(ev=>{
+    const d=new Date(ev.sortDate);
+    return d>=today && d<=twoMonthsLater;
+  });
+
+  if(!filtered.length){
+    list.innerHTML='<div style="font-size:12px;color:var(--text-t);padding:8px 0">現在表示できるイベントはありません</div>';
+    return;
+  }
+
+  filtered.forEach(ev=>{
+    const isThisSun=ev.sunDates.includes(sunLabel);
+    const dots=ev.scale.map(v=>`<div class="sd ${v?'sg':''}"></div>`).join('');
+    const div=document.createElement('div');
+    div.className='ev-item'; div.dataset.area2=ev.area2;
+    const thisSunBadge=isThisSun
+      ?`<span class="badge b-green" style="font-size:9px;padding:1px 6px;margin-left:5px">今週日曜開催！</span>`:'';
+    div.innerHTML=`
+      <div class="ev-left">
+        <span class="ev-area-badge ${areaClass[ev.area2]||'ar-osaka'}">${areaLabel[ev.area2]||ev.area2}</span>${thisSunBadge}
+        <span style="font-size:12px;font-weight:700"> ${ev.name}</span>
+        <div class="ev-meta">${ev.meta}</div>
+        <div class="scale">${dots}<span class="stxt">${ev.scaleText}</span></div>
+      </div>
+      <a class="evl" href="${ev.url}" target="_blank" style="flex-shrink:0">サイト →</a>`;
+    list.appendChild(div);
+  });
+}
+
+renderEvents();
+renderEv2();
+
+function filterEv(area,btn){
+  const row=btn.closest('div');row.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  let count=0;
+  document.querySelectorAll('#ev-list .ev-card').forEach(c=>{const show=area==='all'||c.dataset.area===area;c.classList.toggle('hidden',!show);if(show)count++;});
+  document.getElementById('ev-count').textContent=`今週日曜(${getSunLabel()}) ${count}件表示中`;
+}
+function filterEv2(area,btn){
+  const row=btn.closest('div');row.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  document.querySelectorAll('#ev2-list .ev-item').forEach(c=>{c.style.display=(area==='all'||c.dataset.area2===area)?'':'none';});
+}
+function renderSaikazaki(){
+  const el=document.getElementById('saikazaki-wrap');
+  const isSun=DOW===0,isWed=DOW===3;
+  if(!isSun&&!isWed){el.style.display='none';return;}
+  el.innerHTML=`<div class="card">
+    <div class="slbl">雑賀崎漁港</div>
+    <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:130px">
+        <div class="badge b-amber" style="margin-bottom:5px">要確認</div>
+        <div style="font-size:12px;color:var(--text-s);line-height:1.8">定休日：火・土・祝前日<br>開催：15:00〜（10〜5月）<br>14:00頃から漁船が戻り始め</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+        <a class="elink" href="https://x.com/jf_saikazaki" target="_blank">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@jf_saikazaki
+        </a>
+        <a class="elink" href="tel:073-444-2282">☎ 073-444-2282</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===== さかな村（土18時以降・日のみ表示） =====
+function renderSakana(){
+  const el=document.getElementById('sakana-wrap');
+  const isSun=DOW===0,isSatEve=DOW===6&&HOUR>=18,isSatWait=DOW===6&&HOUR<18;
+  const show=isSun||isSatEve;
+  if(!show&&!isSatWait){el.style.display='none';return;}
+
+  const statusBadge=isSun
+    ?'<span class="badge b-green" style="margin-left:5px">本日開催！</span>'
+    :'<span class="badge b-amber" style="margin-left:5px">明日（日曜）開催</span>';
+
+  const notice=isSatWait
+    ?`<div style="background:var(--surf);border-radius:var(--rs);padding:10px;font-size:12px;color:var(--text-s);border:1px dashed var(--border-mid);margin-bottom:8px">
+        🕕 深谷水産HPは土曜 18:00〜19:00頃に出漁情報が更新されます
+      </div>`
+    :`<div style="background:var(--surf);border-radius:var(--rs);padding:10px;font-size:12px;color:var(--text-s);margin-bottom:8px">
+        📸 出漁情報は深谷水産HPの写真投稿で確認できます（土曜18時頃更新）
+      </div>`;
+
+  el.innerHTML=`<div class="card">
+    <div class="slbl">一色さかな村（愛知・西尾市）</div>
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-bottom:10px">
+      <span class="badge b-teal">日曜OK</span>
+      <span class="badge b-amber">5:00〜12:00</span>
+      <span class="badge b-gray">定休：月・水</span>
+      ${isSatWait?'':statusBadge}
+    </div>
+    ${notice}
+    <div class="link-row">
+      <a class="elink" href="https://sakanamurafukaya.amebaownd.com/pages/3672060/BLOG" target="_blank">📋 出漁情報HP（深谷水産）</a>
+      <a class="elink" href="https://sakanamurafukaya.amebaownd.com/pages/3672655/STATIC" target="_blank">🐟 一色漁港の魚達</a>
+      <a class="elink" href="https://www.youtube.com/@uoken" target="_blank">うおけんch</a>
+      <a class="elink" href="https://www.youtube.com/@makiron" target="_blank">まきろんch</a>
+    </div>
+  </div>`; 
+}
+
+function showSkTab(id,btn){
+  document.querySelectorAll('#sk-tabs .tab').forEach(t=>t.classList.remove('active'));
+  ['ships','fish','tips'].forEach(k=>{const el=document.getElementById('sk-'+k);if(el)el.classList.remove('show');});
+  btn.classList.add('active');
+  document.getElementById('sk-'+id)?.classList.add('show');
+}
+
+// 初期化
+renderSaikazaki();
+renderSakana();
+
+// ===== 倉庫市・工場直売 AI検索 =====
+// 号外NET 大阪エリア版のRSSフィード一覧
+const GOGUY_FEEDS = [
+  // 東河内・南大阪
+  {area:'東大阪市',     url:'https://higashiosaka.goguynet.jp/feed/'},
+  {area:'八尾市',       url:'https://yao.goguynet.jp/feed/'},
+  {area:'堺市北区',     url:'https://sakaikita-higashi-mihara.goguynet.jp/feed/'},
+  {area:'堺市堺区',     url:'https://sakai-nishi.goguynet.jp/feed/'},
+  {area:'堺市中区',     url:'https://sakainaka-minami.goguynet.jp/feed/'},
+  {area:'泉州',         url:'https://kanku-area.goguynet.jp/feed/'},
+  {area:'岸和田',       url:'https://kishiwada-kaizuka.goguynet.jp/feed/'},
+  {area:'和泉市',       url:'https://izumi.goguynet.jp/feed/'},
+  {area:'泉南',         url:'https://izumisano-sennan-hannan.goguynet.jp/feed/'},
+  {area:'富田林・河内長野', url:'https://tondabayashi-kawachinagano.goguynet.jp/feed/'},
+  {area:'羽曳野・藤井寺', url:'https://habikino-fujiidera-kashiwara.goguynet.jp/feed/'},
+  // 大阪市内
+  {area:'大阪市住吉',   url:'https://sumiyoshi-higashisumiyoshi.goguynet.jp/feed/'},
+  {area:'大阪市平野',   url:'https://hirano.goguynet.jp/feed/'},
+  {area:'大阪市天王寺', url:'https://tennoji-ku.goguynet.jp/feed/'},
+  {area:'大阪市鶴見・城東', url:'https://tsurumi-joto.goguynet.jp/feed/'},
+  {area:'大阪市港・大正', url:'https://minato-taisho.goguynet.jp/feed/'},
+  {area:'大阪市淀川・西淀川', url:'https://yodogawaku.goguynet.jp/feed/'},
+  // 北河内（追加）
+  {area:'守口市・門真市', url:'https://moriguchikadoma.goguynet.jp/feed/'},
+  {area:'寝屋川市',     url:'https://neyagawa.goguynet.jp/feed/'},
+  {area:'枚方市',       url:'https://hirakata.goguynet.jp/feed/'},
+  {area:'大東市・四條畷', url:'https://daitoshijonawate.goguynet.jp/feed/'},
+  // 北摂（追加）
+  {area:'豊中市',       url:'https://toyonaka.goguynet.jp/feed/'},
+  {area:'吹田市',       url:'https://suita.goguynet.jp/feed/'},
+  {area:'茨木市',       url:'https://ibaraki.goguynet.jp/feed/'},
+  {area:'箕面市・池田市', url:'https://minoh.goguynet.jp/feed/'},
+  {area:'高槻市',       url:'https://takatsuki.goguynet.jp/feed/'},
+  // 兵庫（追加）
+  {area:'尼崎市',       url:'https://amagasaki.goguynet.jp/feed/'},
+  {area:'神戸市東灘',   url:'https://kobehigashinada.goguynet.jp/feed/'},
+  {area:'神戸市長田',   url:'https://kobehyogoku-nagataku.goguynet.jp/feed/'},
+];
+
+// キーワードON/OFF管理
+document.querySelectorAll('.kw-tag').forEach(btn=>{
+  btn.addEventListener('click',()=>btn.classList.toggle('on'));
+});
+
+function getActiveKws(){
+  return [...document.querySelectorAll('.kw-tag.on')].map(b=>b.dataset.kw);
+}
+
+function setStatus(state, msg){
+  const dot=document.getElementById('ai-dot');
+  dot.className='ai-dot '+state;
+  document.getElementById('ai-status-txt').textContent=msg;
+}
+
+function clearFactoryResults(){
+  document.getElementById('factory-list').innerHTML='';
+  document.getElementById('factory-count').textContent='';
+  setStatus('','検索前');
+}
+
+// RSSをCORSプロキシ経由で取得してパース（直近1ヶ月のみ）
+async function fetchRSS(feed){
+  const proxy='https://api.allorigins.win/get?url='+encodeURIComponent(feed.url);
+  const cutoff=new Date();
+  cutoff.setMonth(cutoff.getMonth()+1); // 1ヶ月先まで
+  const past=new Date();
+  past.setMonth(past.getMonth()-1);     // 1ヶ月前まで（記事掲載日）
+  try{
+    const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
+    if(!r.ok)return[];
+    const json=await r.json();
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(json.contents,'text/xml');
+    const items=[...doc.querySelectorAll('item')];
+    return items
+      .map(it=>({
+        area: feed.area,
+        title: it.querySelector('title')?.textContent||'',
+        link:  it.querySelector('link')?.textContent||'',
+        desc:  (it.querySelector('description')?.textContent||'').replace(/<[^>]+>/g,'').slice(0,250),
+        date:  it.querySelector('pubDate')?.textContent||''
+      }))
+      .filter(a=>{
+        // 記事の掲載日が過去1ヶ月以内のものだけ対象
+        if(!a.date)return true;
+        const d=new Date(a.date);
+        return d>=past;
+      });
+  }catch{return[];}
+}
+
+// Claude APIでフィルタリング・開催日抽出・要約
+async function aiFilter(articles, keywords){
+  const today=new Date();
+  const oneMonthLater=new Date();
+  oneMonthLater.setMonth(oneMonthLater.getMonth()+1);
+  const todayStr=today.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
+  const limitStr=oneMonthLater.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
+
+  const articlesText = articles.map((a,i)=>
+    `[${i}] エリア:${a.area} 記事日:${a.date?new Date(a.date).toLocaleDateString('ja-JP'):'不明'} タイトル:${a.title} 概要:${a.desc}`
+  ).join('\n');
+
+  const prompt = `今日は${todayStr}です。
+以下は地域ニュースサイト（号外NET）の記事一覧です。
+「${keywords.join('・')}」に関連し、かつ**${todayStr}〜${limitStr}（1ヶ月以内）に開催予定のイベント**に関する記事のみ選んでください。
+
+【含める条件】
+- 工場・倉庫・問屋・卸売業者が主催する販売イベント
+- アウトレット品・訳あり品・規格外品・B品の販売イベント
+- 一般向けの直売会・即売会・倉庫開放・蔵開きイベント
+- 開催日が今日以降1ヶ月以内のもの（記事本文から開催日を読み取ること）
+
+【除外する条件】
+- 飲食店・美容院・塾など工場・倉庫と無関係な店舗のセール
+- すでに終了したイベント
+- 開催日が明確に1ヶ月以上先のもの
+- 開催日の記載がなく、過去イベントの報告記事
+
+記事一覧：
+${articlesText}
+
+該当する記事について、JSON配列のみで返答（他テキスト不要）：
+[{"index":番号,"title":"簡潔なタイトル","area":"エリア名","eventDate":"開催日（例:3月21日・3/21〜22など。不明なら空文字）","summary":"30字以内で内容を要約","keyword":"最も当てはまるキーワード1つ","isUrgent":開催まで3日以内ならtrue}]
+該当なしは [] のみ。`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if(!res.ok) throw new Error('API error');
+  const data=await res.json();
+  const text=data.content.map(c=>c.text||'').join('');
+  const clean=text.replace(/```json|```/g,'').trim();
+  try{ return JSON.parse(clean); }catch{ return []; }
+}
+
+function renderFactoryCards(results, articles){
+  const list=document.getElementById('factory-list');
+  if(!results.length){
+    list.innerHTML='<div class="factory-empty" style="grid-column:1/-1">🔍 直近1ヶ月以内の該当イベントは見つかりませんでした</div>';
+    document.getElementById('factory-count').textContent='0件';
+    return;
+  }
+  // 開催日の近い順にソート（eventDateあるものを先に）
+  results.sort((a,b)=>{
+    if(a.eventDate&&!b.eventDate)return -1;
+    if(!a.eventDate&&b.eventDate)return 1;
+    return 0;
+  });
+  list.innerHTML='';
+  results.forEach(r=>{
+    const orig=articles[r.index]||{};
+    const card=document.createElement('div');
+    card.className='factory-card';
+    const urgentBadge=r.isUrgent?'<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--danger-bg);color:var(--danger-text);font-weight:700;margin-left:4px">まもなく</span>':'';
+    const dateBadge=r.eventDate
+      ?`<div style="font-size:12px;font-weight:800;color:var(--warn-text);margin:3px 0 1px">📅 ${r.eventDate}${urgentBadge}</div>`
+      :'';
+    card.innerHTML=`
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+        <span class="factory-tag">🏭 ${r.keyword||'直売'}</span>
+        <span style="font-size:9px;color:var(--text-t)">${r.area}</span>
+      </div>
+      <div class="factory-name">${r.title}</div>
+      ${dateBadge}
+      <div class="factory-meta">${r.summary}</div>
+      <div class="factory-footer">
+        <span class="factory-src">号外NET</span>
+        ${orig.link?`<a class="evl" href="${orig.link}" target="_blank">記事 →</a>`:''}
+      </div>`;
+    list.appendChild(card);
+  });
+  document.getElementById('factory-count').textContent=results.length+'件見つかりました';
+}
+
+// ===== プレビュー用ダミーデータ =====
+function showDemoCards(){
+  const demoResults=[
+    {index:0,title:'Dream market 倉庫市 第3弾',area:'東大阪市',eventDate:'3月28日（土）',summary:'訳ありバームクーヘン大量販売・日用品格安',keyword:'倉庫市',isUrgent:false},
+    {index:1,title:'メルカート卸団地 春の大売り出し',area:'東大阪市',eventDate:'3月21日（土）・22日（日）',summary:'問屋直売・食品・雑貨が卸値価格で',keyword:'大売り出し',isUrgent:true},
+    {index:2,title:'パナソニック工場直売会',area:'守口市・門真市',eventDate:'4月5日（土）',summary:'電化製品B品・展示品を特別価格で放出',keyword:'工場直売',isUrgent:false},
+    {index:3,title:'ケミカルシューズ 倉庫開放セール',area:'神戸市長田',eventDate:'3月29日（土）・30日（日）',summary:'国内製靴メーカーのアウトレット品を直売',keyword:'倉庫開放',isUrgent:false},
+    {index:4,title:'菓子問屋 大蔵ざらえセール',area:'豊中市',eventDate:'4月12日（土）',summary:'賞味期限近い菓子・季節外れ品を格安放出',keyword:'大蔵ざらえ',isUrgent:false},
+    {index:5,title:'繊維卸 在庫放出市',area:'堺市北区',eventDate:'3月22日（日）',summary:'規格外生地・ニット素材をメーター売り',keyword:'放出市',isUrgent:true},
+  ];
+  const demoArticles=demoResults.map(r=>({link:'#',area:r.area}));
+  renderFactoryCards(demoResults,demoArticles);
+  setStatus('done','※ これはプレビュー表示です（実データではありません）');
+  document.getElementById('factory-count').textContent=demoResults.length+'件（サンプル）';
+}
+
+async function runFactorySearch(){
+  const kws=getActiveKws();
+  if(!kws.length){alert('キーワードを1つ以上ONにしてください');return;}
+
+  const btn=document.getElementById('search-btn');
+  btn.disabled=true; btn.textContent='検索中…';
+  document.getElementById('factory-list').innerHTML='';
+  document.getElementById('factory-count').textContent='';
+  setStatus('loading','号外NETの最新記事を取得中…');
+
+  try{
+    // RSS並列取得
+    const allFeeds=await Promise.all(GOGUY_FEEDS.map(fetchRSS));
+    const allArticles=allFeeds.flat();
+    setStatus('loading',`${allArticles.length}件の記事を取得。AIが解析中…`);
+
+    // AIでフィルタ（バッチを30件ずつ）
+    const BATCH=30;
+    let matched=[];
+    for(let i=0;i<allArticles.length;i+=BATCH){
+      const batch=allArticles.slice(i,i+BATCH);
+      setStatus('loading',`AIが解析中… (${Math.min(i+BATCH,allArticles.length)}/${allArticles.length}件)`);
+      const hits=await aiFilter(batch,kws);
+      // indexをグローバル通し番号に補正
+      hits.forEach(h=>{ h._orig=batch[h.index]; });
+      matched=matched.concat(hits.map(h=>({...h,_orig:h._orig})));
+    }
+
+    // 最終レンダリング（_origをarticlesとして渡す）
+    const finalArticles=matched.map(h=>h._orig||{});
+    const finalResults=matched.map((h,i)=>({...h,index:i}));
+    renderFactoryCards(finalResults,finalArticles);
+    setStatus('done',`完了 — ${allArticles.length}件中 ${finalResults.length}件が該当`);
+  }catch(e){
+    setStatus('error','エラーが発生しました: '+e.message);
+    document.getElementById('factory-list').innerHTML='<div class="factory-empty" style="grid-column:1/-1">⚠️ 取得に失敗しました。しばらくして再試行してください。</div>';
+  }finally{
+    btn.disabled=false; btn.textContent='🔍 検索開始';
+  }
+}
+</script>
+</body>
+</html>
